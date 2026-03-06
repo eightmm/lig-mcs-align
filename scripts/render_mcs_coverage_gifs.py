@@ -8,9 +8,9 @@ from lig_align.io import process_query_ligand
 
 
 EXAMPLES = [
-    ("low_acetanilide", "Acetanilide", "CC(=O)Nc1ccccc1"),
-    ("medium_aspirin", "Aspirin", "CC(=O)Oc1ccccc1C(=O)O"),
-    ("high_ibuprofen", "Ibuprofen", "CC(C)Cc1ccc(cc1)C(C)C(=O)O"),
+    ("low_tolmetin", "Tolmetin", "Cc1ccc(cc1)C(=O)c1ccc(C)n1CC(=O)O"),
+    ("medium_fenbufen", "Fenbufen", "O=C(O)CCC(=O)c1ccc(c(c1)CC)c1ccccc1"),
+    ("high_acemetacin", "Acemetacin", "COc1ccc2c(c1)c(C(=O)NCc1ccccc1)c(CC(=O)O)n2C"),
 ]
 
 
