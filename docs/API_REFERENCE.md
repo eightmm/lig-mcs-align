@@ -51,12 +51,17 @@ optimize           Enable torsion optimization
 optimizer          adam | adamw | lbfgs
 opt_steps          Number of optimization steps
 opt_lr             Optimization learning rate
-opt_batch_size     Number of poses optimized together
+opt_batch_size     Number of poses processed per optimization batch
 freeze_mcs         Keep MCS atoms fixed during optimization
 weight_preset      vina | vina_lp | vinardo
 torsion_penalty    Apply torsional entropy penalty
 verbose            Print progress
 ```
+
+Current batching note:
+
+- `opt_batch_size` currently batches multiple poses of the same molecule
+- it is not yet a fully vectorized mixed-molecule optimizer
 
 ## Low-Level API
 
@@ -93,7 +98,3 @@ optimized = aligner.step6_refine_pose(
 - `scripts/vis_comparison_grid.py`: generate comparison panels across optimization settings
 - `scripts/vis_opt_gif.py`: make optimization animations
 - `scripts/vis_ref_opt_gif.py`: compare reference-guided optimization trajectories
-
-## Detailed Step Reference
-
-For exhaustive per-step explanations, see [STEP_BY_STEP_CAPABILITIES.md](STEP_BY_STEP_CAPABILITIES.md).

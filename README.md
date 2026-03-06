@@ -78,14 +78,14 @@ This makes it easier to tell whether relaxation ran, how `auto` MCS resolved, an
 - [docs/USAGE.md](docs/USAGE.md): installation, CLI usage, and common workflows
 - [docs/API_REFERENCE.md](docs/API_REFERENCE.md): Python and script-level interfaces
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): pipeline stages and implementation notes
-- [reports/README.md](reports/README.md): weekly report index and presentation assets
+- [reports/README.md](reports/README.md): progress summary and presentation assets
 
 ## Current Status
 
 - Core pipeline implemented in `src/lig_align`
 - Example input and output assets included under `examples/10gs`
 - Documentation reorganized around usage, API, and architecture
-- Weekly reporting structure added under `reports/`
+- Progress summary and presentation assets added under `reports/`
 
 ## Project Layout
 
@@ -96,5 +96,5 @@ lig-align/
 ├── tests/              # regression and feature tests
 ├── examples/           # sample inputs and generated visualization assets
 ├── docs/               # detailed usage, API, architecture, and design notes
-└── reports/            # weekly meeting reports and presentation-oriented material
+└── reports/            # progress summary and presentation-oriented material
 ```

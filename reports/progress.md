@@ -69,20 +69,11 @@ Interpretation:
 - this makes pocket feature caching the most obvious first optimization for repeated runs on the same receptor
 - a same-process smoke test showed `10gs` pocket loading dropping from about `2.01 s` on first load to effectively `0 s` on cache hit
 
-Optimization cost per step:
-
-| Molecule | 25 steps | 50 steps | 100 steps |
-|---|---:|---:|---:|
-| Flurbiprofen | 9.28 ms/step | 3.81 ms/step | 3.80 ms/step |
-| Diclofenac | 4.98 ms/step | 4.95 ms/step | 4.96 ms/step |
-| Acemetacin | 2.68 ms/step | 2.64 ms/step | 2.64 ms/step |
-| Cyclohexylmethyl analog | 3.05 ms/step | 3.17 ms/step | 3.65 ms/step |
-
 Batch and early-stopping probe:
 
 `Acemetacin` was benchmarked over `5` seeds with `300` optimization steps. The representative-pose count varied by seed from `1` to `29`, with a mean of `20.8`.
 
-| Batch size | Early stopping | Total time mean | Total time std | Avg steps mean | Avg steps std | Poses mean | Time per pose |
+| Batch size | Early stopping | Total time mean | Total time std | Avg steps mean | Avg steps std | Representative poses mean | Time per pose |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | 1 | off | 23.214 s | 12.923 s | 300.0 | 0.0 | 20.8 | 1116.05 ms |
 | 1 | on | 9.992 s | 4.593 s | 164.4 | 2.9 | 20.8 | 480.40 ms |
@@ -200,5 +191,5 @@ Interpretation:
 ## What Should Improve Next
 
 1. evaluate more than the first `multi` or `cross` MCS candidate
-2. add a compact benchmark table with runtime, representatives, and score delta
+2. move the optimizer toward true tensorized multi-pose execution
 3. reduce the final slide set to a small canonical asset pack for repeated meetings

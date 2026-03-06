@@ -7,12 +7,8 @@
 - [API_REFERENCE.md](API_REFERENCE.md): Python entry points and script inventory
 - [ARCHITECTURE.md](ARCHITECTURE.md): pipeline stages and implementation notes
 
-## Historical And Research Notes
-
-- [STEP_BY_STEP_CAPABILITIES.md](STEP_BY_STEP_CAPABILITIES.md): detailed step-by-step API walkthrough
-
 ## Reading Order
 
 - New user: `README.md` -> `USAGE.md`
 - Developer onboarding: `README.md` -> `ARCHITECTURE.md` -> `API_REFERENCE.md`
-- Method review: `ARCHITECTURE.md` -> `STEP_BY_STEP_CAPABILITIES.md`
+- Method review: `ARCHITECTURE.md` -> `API_REFERENCE.md`
