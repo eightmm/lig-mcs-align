@@ -6,7 +6,7 @@ from rdkit.Chem import ChemicalFeatures
 from rdkit import RDConfig
 import os
 
-# Initialize factory for pharmacophore feature extraction (Hydrophobic, HBD, HBA)
+# Initialize RDKit feature factory for scoring-related atom annotations.
 fdefName = os.path.join(RDConfig.RDDataDir, 'BaseFeatures.fdef')
 factory = ChemicalFeatures.BuildFeatureFactory(fdefName)
 
@@ -34,7 +34,7 @@ def compute_vina_features(mol: Chem.Mol, device: torch.device) -> dict:
     except Exception:
         pass
 
-    # Extract pharmacophore features
+    # Extract scoring-relevant atom features.
     feats = factory.GetFeaturesForMol(mol)
     for feat in feats:
         f_type = feat.GetFamily()

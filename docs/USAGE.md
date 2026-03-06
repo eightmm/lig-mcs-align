@@ -114,5 +114,4 @@ Run the existing tests with `uv` so the same environment definition is reused.
 uv run python tests/test_mcs_modes_cli.py
 uv run python tests/test_pipeline_api.py
 uv run python tests/test_unified_mcs_api.py
-uv run python tests/test_functional_groups_final.py
 ```

@@ -52,10 +52,3 @@ graph TD
 
 - Batched operations matter more than single-pose peak quality for throughput
 - MCS anchoring is the central design constraint of the current system
-- Pharmacophore logic is retained as an analysis tool, not as the alignment backbone
-
-## Related Design Notes
-
-- [ALIGNMENT_METHODS_ANALYSIS.md](ALIGNMENT_METHODS_ANALYSIS.md)
-- [PHARMACOPHORE.md](PHARMACOPHORE.md)
-- [PHARMACOPHORE_DESIGN.md](PHARMACOPHORE_DESIGN.md)
