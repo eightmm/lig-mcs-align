@@ -16,7 +16,7 @@ from lig_align.aligner import LigandAligner
 from lig_align.alignment import LigandKinematics
 from lig_align.scoring import vina_scoring, compute_intramolecular_mask
 from lig_align.molecular import compute_vina_features
-from lig_align.io import process_query_ligand
+from lig_align.io import load_pocket_bundle, process_query_ligand
 
 RDLogger.DisableLog('rdApp.warning')
 
@@ -130,7 +130,8 @@ def create_2x2_comparison(query_smiles, output_path, protein_pdb=None, ref_sdf=N
 
     # Load reference and pocket
     ref_mol = Chem.SDMolSupplier(ref_sdf)[0]
-    pocket_mol = Chem.MolFromPDBFile(protein_pdb, sanitize=False, removeHs=True)
+    pocket_bundle = load_pocket_bundle(protein_pdb, device, aligner.compute_vina_features)
+    pocket_mol = pocket_bundle.mol
 
     if ref_mol is None or pocket_mol is None:
         raise ValueError("Failed to load molecules")
@@ -160,12 +161,11 @@ def create_2x2_comparison(query_smiles, output_path, protein_pdb=None, ref_sdf=N
 
     # Get reference and pocket coordinates
     ref_coords = torch.tensor(ref_conf.GetPositions(), dtype=torch.float32, device=device)
-    pocket_coords = torch.tensor(pocket_mol.GetConformer().GetPositions(),
-                                dtype=torch.float32, device=device)
+    pocket_coords = pocket_bundle.coords
 
     # Compute features
     query_features = compute_vina_features(query_mol, device)
-    pocket_features = compute_vina_features(pocket_mol, device)
+    pocket_features = pocket_bundle.features
 
     print(f"\nRunning 4 optimization methods...")
 

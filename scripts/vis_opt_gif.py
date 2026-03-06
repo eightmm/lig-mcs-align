@@ -16,7 +16,7 @@ from rdkit import RDLogger
 from lig_align.aligner import LigandAligner
 from lig_align.alignment import LigandKinematics
 from lig_align.scoring import vina_scoring, compute_intramolecular_mask
-from lig_align.io import process_query_ligand
+from lig_align.io import load_pocket_bundle, process_query_ligand
 from lig_align.io.visualization import get_2d_image, draw_molecule_3d
 from lig_align.molecular.relax import relax_pose_with_fixed_core
 
@@ -45,7 +45,8 @@ def main():
 
     # 1. Loading
     ref_mol = Chem.SDMolSupplier(ref_sdf)[0]
-    pocket_mol = Chem.MolFromPDBFile(protein_pdb, sanitize=False, removeHs=True)
+    pocket_bundle = load_pocket_bundle(protein_pdb, device, aligner.compute_vina_features)
+    pocket_mol = pocket_bundle.mol
     
     query_mol, _ = process_query_ligand(query_smiles)
     
@@ -82,9 +83,9 @@ def main():
     init_coords = torch.tensor(conf.GetPositions(), dtype=torch.float32, device=device)
     
     # 5. Extract Features
-    pocket_coords = torch.tensor(pocket_mol.GetConformer().GetPositions(), dtype=torch.float32, device=device)
+    pocket_coords = pocket_bundle.coords
     query_feat = aligner.compute_vina_features(query_mol)
-    pocket_feat = aligner.compute_vina_features(pocket_mol)
+    pocket_feat = pocket_bundle.features
     ref_coords_numpy = torch.tensor(ref_mol.GetConformer().GetPositions()).cpu().numpy()
     
     # 6. Setup Kinematics and Optimizer

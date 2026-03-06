@@ -80,31 +80,32 @@ Optimization cost per step:
 
 Batch and early-stopping probe:
 
-`Acemetacin` was used with `11` representative poses, `100` optimization steps, and the current default early-stopping settings.
+`Acemetacin` was benchmarked over `5` seeds with `300` optimization steps. The representative-pose count varied by seed from `1` to `29`, with a mean of `20.8`.
 
-| Batch size | Early stopping | Total time | Avg steps per pose | Time per pose |
-|---|---:|---:|---:|---:|
-| 1 | off | 3.445 s | 100.0 | 313.19 ms |
-| 1 | on | 3.286 s | 100.0 | 298.72 ms |
-| 4 | off | 3.284 s | 100.0 | 298.52 ms |
-| 4 | on | 3.287 s | 100.0 | 298.78 ms |
-| 8 | off | 3.286 s | 100.0 | 298.75 ms |
-| 8 | on | 3.275 s | 100.0 | 297.69 ms |
+| Batch size | Early stopping | Total time mean | Total time std | Avg steps mean | Avg steps std | Poses mean | Time per pose |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 1 | off | 23.214 s | 12.923 s | 300.0 | 0.0 | 20.8 | 1116.05 ms |
+| 1 | on | 9.992 s | 4.593 s | 164.4 | 2.9 | 20.8 | 480.40 ms |
+| 4 | off | 18.447 s | 8.581 s | 300.0 | 0.0 | 20.8 | 886.89 ms |
+| 4 | on | 9.972 s | 4.581 s | 164.4 | 2.9 | 20.8 | 479.43 ms |
+| 8 | off | 18.235 s | 8.413 s | 300.0 | 0.0 | 20.8 | 876.67 ms |
+| 8 | on | 9.957 s | 4.574 s | 164.4 | 2.9 | 20.8 | 478.69 ms |
 
 Interpretation:
 
-- with the current default thresholds, early stopping did not trigger in this benchmark
-- increasing `batch_size` did not materially reduce runtime in the current implementation
+- with a longer `300`-step budget, early stopping reduced the average step count from `300` to about `164`
+- that translated to roughly a `57%` reduction in total runtime in this probe
+- increasing `batch_size` still did not materially reduce runtime in the current implementation
 - the main reason is that the optimizer still iterates pose-by-pose inside each batch, so this is workflow batching rather than a fully vectorized batched optimizer
 - heterogeneous batches with different molecules are not yet supported by the current API
 - `VRAM` was not measured here because CUDA was not available in the current environment
-- this quick probe should be followed by a longer multi-seed benchmark, because the current conformer path uses a fixed seed in the main code path
+- runtime variance across seeds is large because the representative-pose count changes substantially with seeded conformer generation
 
 What this suggests:
 
 - pocket feature caching is likely a higher-value speedup than changing `batch_size`
 - if batch efficiency is a priority, the optimization loop should move toward true tensorized multi-pose execution
-- if early stopping is expected to matter, the stopping thresholds should be revisited and benchmarked explicitly
+- early stopping is worth keeping, but it should always be evaluated together with pose-count variance across seeds
 
 ### Representative Optimization Run
 

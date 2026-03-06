@@ -11,6 +11,7 @@ from rdkit.Chem import rdMolDescriptors
 
 from lig_align.aligner import LigandAligner
 from lig_align.alignment import LigandKinematics
+from lig_align.io import load_pocket_bundle
 from lig_align.scoring import vina_scoring, compute_intramolecular_mask
 from lig_align.io.visualization import draw_molecule_3d
 
@@ -30,16 +31,17 @@ def main():
     aligner = LigandAligner(device=device)
 
     # 1. Loading
-    pocket_mol = Chem.MolFromPDBFile(args.protein, sanitize=False, removeHs=True)
+    pocket_bundle = load_pocket_bundle(args.protein, device, aligner.compute_vina_features)
+    pocket_mol = pocket_bundle.mol
     ligand_mol = Chem.SDMolSupplier(args.ligand)[0]
     ligand_mol = Chem.AddHs(ligand_mol, addCoords=True)
     
     init_coords = torch.tensor(ligand_mol.GetConformer().GetPositions(), dtype=torch.float32, device=device)
-    pocket_coords = torch.tensor(pocket_mol.GetConformer().GetPositions(), dtype=torch.float32, device=device)
+    pocket_coords = pocket_bundle.coords
     
     # 2. Extract Features
     query_feat = aligner.compute_vina_features(ligand_mol)
-    pocket_feat = aligner.compute_vina_features(pocket_mol)
+    pocket_feat = pocket_bundle.features
     
     num_rotatable_bonds = None
     if args.torsion_penalty:

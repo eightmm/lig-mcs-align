@@ -4,6 +4,7 @@ import torch
 import copy
 from rdkit import Chem
 from lig_align.aligner import LigandAligner
+from lig_align.io import load_pocket_bundle
 from lig_align.scoring import compute_intramolecular_mask
 from rdkit.Chem import rdMolDescriptors
 
@@ -16,7 +17,7 @@ def optimize_single_pose(protein_pdb: str, ligand_sdf: str, out_sdf: str, num_st
     aligner = LigandAligner(device=device)
 
     print(f"Loading protein pocket from {protein_pdb}...")
-    pocket_mol = Chem.MolFromPDBFile(protein_pdb, sanitize=False, removeHs=True)
+    pocket_bundle = load_pocket_bundle(protein_pdb, device, aligner.compute_vina_features)
     
     print(f"Loading 3D ligand from {ligand_sdf}...")
     suppl = Chem.SDMolSupplier(ligand_sdf)
@@ -24,10 +25,10 @@ def optimize_single_pose(protein_pdb: str, ligand_sdf: str, out_sdf: str, num_st
     ligand_mol = Chem.AddHs(ligand_mol, addCoords=True)
     
     init_coords = torch.tensor(ligand_mol.GetConformer().GetPositions(), dtype=torch.float32, device=device)
-    pocket_coords = torch.tensor(pocket_mol.GetConformer().GetPositions(), dtype=torch.float32, device=device)
+    pocket_coords = pocket_bundle.coords
     
     query_features = aligner.compute_vina_features(ligand_mol)
-    pocket_features = aligner.compute_vina_features(pocket_mol)
+    pocket_features = pocket_bundle.features
     
     num_rotatable_bonds = None
     if torsion_penalty:
