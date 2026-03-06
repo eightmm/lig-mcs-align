@@ -35,6 +35,7 @@ Current runtime behavior:
 - relaxation safely skips trivial fixed-core cases
 - output SDFs record selected mode, relaxation status, and score deltas
 - current batched optimization supports multiple poses of the same molecule, not mixed-molecule batches
+- reported `Vina` scores now follow the standard formula by default, including the torsional penalty term
 
 ## What This Setup Can Show
 
@@ -112,6 +113,7 @@ Interpretation:
 Term clarification:
 
 - `Representative poses mean` is the average number of poses that survived Butina clustering and actually entered optimization
+- batch optimization only becomes useful after conformer generation and clustering leave multiple representative poses to optimize
 
 What this suggests:
 
@@ -123,6 +125,28 @@ What this suggests:
 Main takeaway:
 
 - keep early stopping on for longer optimization budgets, but do not expect `batch_size` alone to fix runtime until the optimizer becomes truly vectorized
+
+### GPU Batch Probe
+
+The GPU probe below was run separately with `5` seeds, `100` optimization steps, and `batch_size` values of `1` and `8`.
+
+| Batch size | Early stopping | Total time mean | Total time std | Avg steps mean | Avg steps std | Representative poses mean | Time per pose | Peak alloc | Peak reserved |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | off | 7.675 s | 5.871 s | 100.0 | 0.0 | 11.0 | 697.73 ms | 19.4 MB | 24.0 MB |
+| 1 | on | 5.456 s | 4.135 s | 100.0 | 0.0 | 11.0 | 495.97 ms | 19.5 MB | 24.0 MB |
+| 8 | off | 1.337 s | 0.035 s | 100.0 | 0.0 | 11.0 | 121.51 ms | 29.2 MB | 42.0 MB |
+| 8 | on | 1.333 s | 0.030 s | 100.0 | 0.0 | 11.0 | 121.18 ms | 29.2 MB | 42.0 MB |
+
+Interpretation:
+
+- on GPU, `batch_size=8` reduced runtime by about `5.7x` relative to `batch_size=1`
+- pose-level cost dropped from about `698 ms` to `122 ms`
+- VRAM increased modestly from about `19 MB` allocated to about `29 MB` allocated
+- in this shorter `100`-step GPU probe, early stopping did not materially change the step count
+
+Main takeaway:
+
+- once multiple representative poses survive clustering, GPU batch optimization is clearly worthwhile
 
 ### Representative Optimization Run
 

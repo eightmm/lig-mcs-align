@@ -43,7 +43,7 @@ def run_pipeline(
     freeze_mcs: bool = True,
     # Scoring
     weight_preset: Literal["vina", "vina_lp", "vinardo"] = "vina",
-    torsion_penalty: bool = False,
+    torsion_penalty: bool = True,
     # Output
     save_all_poses: Optional[bool] = None,
     top_k: Optional[int] = None,
@@ -92,7 +92,7 @@ def run_pipeline(
             - "vina": Standard AutoDock Vina
             - "vina_lp": Vina with local preference
             - "vinardo": Vinardo scoring function
-        torsion_penalty: Apply torsional entropy penalty (default: False)
+        torsion_penalty: Apply torsional entropy penalty (default: True)
 
         # Output
         save_all_poses: Save all poses or just top-k (default: None, auto-decided by optimize flag)

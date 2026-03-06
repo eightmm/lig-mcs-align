@@ -2,17 +2,18 @@ import argparse
 import os
 import torch
 import copy
-from rdkit import Chem
+from rdkit import Chem, RDLogger
 from lig_align.aligner import LigandAligner
 from lig_align.io import load_pocket_bundle
 from lig_align.scoring import compute_intramolecular_mask
 from rdkit.Chem import rdMolDescriptors
 
-def optimize_single_pose(protein_pdb: str, ligand_sdf: str, out_sdf: str, num_steps: int = 100, lr: float = 0.05, torsion_penalty: bool = False, weight_preset: str = 'vina', optimizer: str = 'adam'):
+def optimize_single_pose(protein_pdb: str, ligand_sdf: str, out_sdf: str, num_steps: int = 100, lr: float = 0.05, torsion_penalty: bool = True, weight_preset: str = 'vina', optimizer: str = 'adam'):
     """
     Loads an existing 3D ligand pose (e.g., the native reference) and optimizes its torsions 
     in place against the protein pocket without running conformer generation or alignment.
     """
+    RDLogger.DisableLog("rdApp.warning")
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     aligner = LigandAligner(device=device)
 
@@ -88,7 +89,12 @@ if __name__ == "__main__":
     parser.add_argument("--steps", type=int, default=200, help="Number of gradient steps")
     parser.add_argument("--lr", type=float, default=0.05, help="Learning rate")
     parser.add_argument("--optimizer", type=str, choices=["adam", "adamw", "lbfgs"], default="adam", help="Optimizer: adam, adamw, or lbfgs (default: adam)")
-    parser.add_argument("--torsion_penalty", action="store_true", help="Apply Torsional Entropy Penalty")
+    parser.set_defaults(torsion_penalty=True)
+    torsion_group = parser.add_mutually_exclusive_group()
+    torsion_group.add_argument("--torsion_penalty", dest="torsion_penalty", action="store_true",
+                               help="Include the standard AutoDock Vina torsional entropy penalty (default)")
+    torsion_group.add_argument("--no_torsion_penalty", dest="torsion_penalty", action="store_false",
+                               help="Disable the torsional entropy penalty")
     parser.add_argument("--weight_preset", type=str, choices=["vina", "vina_lp", "vinardo"], default="vina", help="Preset dictionary for Vina functional weights")
     args = parser.parse_args()
 

@@ -16,7 +16,7 @@ from lig_align.molecular.relax import relax_pose_with_fixed_core
 def run_prediction(protein_pdb: str, ref_sdf: str, query_arg: str, out_dir: str,
                    num_confs: int = 1000, rmsd_threshold: float = 1.0,
                    mmff_opt: bool = True, optimize: bool = False,
-                   freeze_mcs: bool = True, torsion_penalty: bool = False,
+                   freeze_mcs: bool = True, torsion_penalty: bool = True,
                    weight_preset: str = 'vina', opt_batch_size: int = 8,
                    optimizer: str = 'adam', mcs_mode: str = 'auto',
                    min_fragment_size: int = 5, max_fragments: int = 3):
@@ -233,7 +233,12 @@ if __name__ == "__main__":
     parser.add_argument("--opt_batch_size", type=int, default=8, help="Batch size for optimization (default: 8)")
     parser.add_argument("--optimizer", type=str, choices=["adam", "adamw", "lbfgs"], default="adam", help="Optimizer for torsion optimization: adam, adamw, or lbfgs (default: adam)")
     parser.add_argument("--free_mcs", action="store_true", help="During optimization, let the MCS also optimize instead of acting as a rigid anchor")
-    parser.add_argument("--torsion_penalty", action="store_true", help="Apply AutoDock Vina Torsional Entropy penalty (N_rot) to the score")
+    parser.set_defaults(torsion_penalty=True)
+    torsion_group = parser.add_mutually_exclusive_group()
+    torsion_group.add_argument("--torsion_penalty", dest="torsion_penalty", action="store_true",
+                               help="Include the standard AutoDock Vina torsional entropy penalty (default)")
+    torsion_group.add_argument("--no_torsion_penalty", dest="torsion_penalty", action="store_false",
+                               help="Disable the torsional entropy penalty and report interaction-only scores")
     parser.add_argument("--weight_preset", type=str, choices=["vina", "vina_lp", "vinardo"], default="vina", help="Preset dictionary for Vina functional weights")
 
     # MCS Mode Options

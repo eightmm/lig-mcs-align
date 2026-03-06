@@ -10,6 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from rdkit.Chem import rdMolDescriptors
 from rdkit import RDLogger
 
 from lig_align.aligner import LigandAligner
@@ -53,7 +54,7 @@ def draw_molecule_3d(ax, mol, coords, color, alpha, label, highlight_indices=Non
 
 def optimize_pose(mol, ref_indices, init_coords, pocket_coords, query_features, pocket_features,
                  device, num_steps=100, lr=0.05, freeze_mcs=True,
-                 torsion_penalty=False, weight_preset='vina'):
+                 torsion_penalty=True, weight_preset='vina'):
     """Run optimization and return trajectory."""
 
     # Check if molecule has rotatable bonds
@@ -72,8 +73,7 @@ def optimize_pose(mol, ref_indices, init_coords, pocket_coords, query_features, 
     # Calculate number of rotatable bonds
     num_rot_bonds = None
     if torsion_penalty:
-        rot_smarts = Chem.MolFromSmarts('[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]')
-        num_rot_bonds = len(mol.GetSubstructMatches(rot_smarts))
+        num_rot_bonds = rdMolDescriptors.CalcNumRotatableBonds(mol)
 
     # Track trajectory (save every 10 steps)
     trajectory = []
@@ -190,12 +190,12 @@ def create_2x2_comparison(query_smiles, output_path, protein_pdb=None, ref_sdf=N
                                    num_steps=num_steps, freeze_mcs=True,
                                    weight_preset='vinardo')
 
-    # Method 4: Free MCS + Torsion Penalty
-    print("  4/4 Free MCS + Torsion Penalty...")
+    # Method 4: Free MCS + No Torsion Penalty
+    print("  4/4 Free MCS + No Torsion Penalty...")
     traj4, scores4 = optimize_pose(query_mol, query_indices, init_coords, pocket_coords,
                                    query_features, pocket_features, device,
                                    num_steps=num_steps, freeze_mcs=False,
-                                   torsion_penalty=True, weight_preset='vina')
+                                   torsion_penalty=False, weight_preset='vina')
 
     # Create 2x2 plot with 6 columns per method
     print("\nCreating comprehensive visualization...")
@@ -205,7 +205,7 @@ def create_2x2_comparison(query_smiles, output_path, protein_pdb=None, ref_sdf=N
         ("Fixed MCS + Vina", traj1, scores1, True),
         ("Free MCS + Vina", traj2, scores2, False),
         ("Fixed MCS + Vinardo", traj3, scores3, True),
-        ("Free MCS + Torsion Penalty", traj4, scores4, False),
+        ("Free MCS + No Torsion Penalty", traj4, scores4, False),
     ]
 
     for idx, (method_name, traj, scores, freeze_mcs) in enumerate(methods, 1):

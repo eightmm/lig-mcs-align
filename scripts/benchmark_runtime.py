@@ -3,8 +3,9 @@ import statistics as stats
 import time
 
 import torch
-from rdkit import Chem
+from rdkit import Chem, RDLogger
 from rdkit.Chem import AllChem
+from rdkit.Chem import rdMolDescriptors
 from rdkit.ML.Cluster import Butina
 
 from lig_align.aligner import LigandAligner
@@ -152,7 +153,7 @@ def run_batch_probe(prepared, steps, batch_size, early_stopping, seed):
         num_steps=steps,
         lr=0.05,
         freeze_mcs=True,
-        num_rotatable_bonds=None,
+        num_rotatable_bonds=rdMolDescriptors.CalcNumRotatableBonds(prepared["query_mol"]),
         weight_preset="vina",
         batch_size=batch_size,
         optimizer="adam",
@@ -193,6 +194,8 @@ def main():
     parser.add_argument("--batch_sizes", type=int, nargs="+", default=[1, 4, 8])
     parser.add_argument("--device", default="cpu")
     args = parser.parse_args()
+
+    RDLogger.DisableLog("rdApp.warning")
 
     configs = [(batch_size, early) for batch_size in args.batch_sizes for early in (False, True)]
     aggregate = {

@@ -54,7 +54,7 @@ opt_lr             Optimization learning rate
 opt_batch_size     Number of poses processed per optimization batch
 freeze_mcs         Keep MCS atoms fixed during optimization
 weight_preset      vina | vina_lp | vinardo
-torsion_penalty    Apply torsional entropy penalty
+torsion_penalty    Apply torsional entropy penalty (default: True)
 verbose            Print progress
 ```
 

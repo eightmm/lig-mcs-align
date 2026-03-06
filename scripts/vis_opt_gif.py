@@ -29,7 +29,12 @@ def main():
     parser.add_argument("-t", "--title", required=False, default="Optimization", help="Plot Title")
     parser.add_argument("--steps", type=int, default=100, help="Number of optimization steps")
     parser.add_argument("--free_mcs", action="store_true", help="Allow MCS atoms to optimize as well")
-    parser.add_argument("--torsion_penalty", action="store_true", help="Apply AutoDock Vina Torsional Entropy penalty (N_rot) to the score")
+    parser.set_defaults(torsion_penalty=True)
+    torsion_group = parser.add_mutually_exclusive_group()
+    torsion_group.add_argument("--torsion_penalty", dest="torsion_penalty", action="store_true",
+                               help="Include the standard AutoDock Vina torsional entropy penalty (default)")
+    torsion_group.add_argument("--no_torsion_penalty", dest="torsion_penalty", action="store_false",
+                               help="Disable the torsional entropy penalty")
     parser.add_argument("--weight_preset", type=str, choices=["vina", "vina_lp", "vinardo"], default="vina", help="Preset dictionary for Vina functional weights")
     args = parser.parse_args()
 

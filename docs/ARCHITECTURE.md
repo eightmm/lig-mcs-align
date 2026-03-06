@@ -212,14 +212,15 @@ Behavior by option:
   - alternative scoring preset
   - often worth trying when ranking behavior under standard Vina is unsatisfactory
 - `torsion_penalty=True`
+  - default behavior for `vina`-style reporting in this project
   - adds torsional entropy penalty based on rotatable bond count
-  - can discourage overly flexible poses
+  - mostly affects cross-ligand score comparison rather than same-ligand pose ordering
 
 Practical guidance:
 
 - start with `vina`
 - compare against `vinardo` when ranking quality is questionable
-- enable torsion penalty when flexible ligands are over-favored by raw interaction energy
+- keep torsion penalty enabled unless you explicitly want interaction-only scores
 
 Outputs from this stage:
 

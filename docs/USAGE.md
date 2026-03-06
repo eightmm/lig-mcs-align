@@ -44,7 +44,7 @@ Common optional arguments:
 --optimizer               adam | adamw | lbfgs
 --weight_preset           vina | vina_lp | vinardo
 --free_mcs                Allow MCS atoms to move during optimization
---torsion_penalty         Apply torsional entropy penalty
+--no_torsion_penalty      Disable the default Vina torsional entropy penalty
 ```
 
 ## Common Workflows
@@ -72,6 +72,11 @@ uv run python scripts/run_pipeline.py \
   --optimizer lbfgs \
   --opt_batch_size 8
 ```
+
+Scoring note:
+
+- `Vina` scores include the standard torsional entropy penalty by default
+- use `--no_torsion_penalty` only when you explicitly want interaction-only scores
 
 ### MCS Mode Guidance
 
