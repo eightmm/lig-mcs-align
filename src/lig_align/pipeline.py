@@ -17,6 +17,7 @@ from .aligner import LigandAligner
 from .scoring import compute_intramolecular_mask
 from .io import process_query_ligand
 from .molecular.mcs import find_mcs_with_positions, auto_select_mcs_mapping
+from .molecular.relax import relax_pose_with_fixed_core
 
 
 def run_pipeline(
@@ -256,7 +257,8 @@ def run_pipeline(
     aligned_coords = torch.zeros((batch_size, num_atoms, 3))
 
     mcs_query_indices = {query_idx for _, query_idx in mapping}
-    mmff_applied = False
+    relaxation_messages = []
+    relaxation_applied = False
 
     for j, cid in enumerate(rep_cids):
         conf = query_mol.GetConformer(cid)
@@ -267,21 +269,12 @@ def run_pipeline(
             conf.SetAtomPosition(query_idx, Point3D(pos.x, pos.y, pos.z))
 
         # Relax non-MCS atoms
-        if mmff_optimize and len(mcs_query_indices) < query_mol.GetNumAtoms():
-            props = AllChem.MMFFGetMoleculeProperties(query_mol)
-            if props:
-                ff = AllChem.MMFFGetMoleculeForceField(query_mol, props, confId=cid)
-                if ff:
-                    for ref_idx, query_idx in mapping:
-                        ff.AddFixedPoint(query_idx)
-                    try:
-                        ff.Minimize(maxIts=500)
-                        mmff_applied = True
-                    except RuntimeError as exc:
-                        if verbose:
-                            print(f"Warning: MMFF relaxation failed for conformer {cid}: {exc}")
-        elif mmff_optimize and verbose:
-            print("Skipping MMFF relaxation because the MCS covers all query atoms.")
+        if mmff_optimize:
+            applied, message = relax_pose_with_fixed_core(query_mol, cid, mcs_query_indices, max_iters=500)
+            relaxation_messages.append(message)
+            relaxation_applied = relaxation_applied or applied
+            if verbose:
+                print(f"  Conformer {cid}: {message}")
 
         aligned_coords[j] = torch.tensor(conf.GetPositions(), dtype=torch.float32)
 
@@ -290,7 +283,9 @@ def run_pipeline(
     # Save pipeline parameters to SDF
     query_mol.SetProp("LigAlign_Num_Confs_Generated", str(num_confs))
     query_mol.SetProp("LigAlign_MMFF_Requested", str(mmff_optimize))
-    query_mol.SetProp("LigAlign_MMFF_Optimized", str(mmff_applied))
+    query_mol.SetProp("LigAlign_MMFF_Optimized", str(relaxation_applied))
+    if mmff_optimize:
+        query_mol.SetProp("LigAlign_Relaxation_Summary", relaxation_messages[0] if relaxation_messages else "not attempted")
 
     # 5. Extract features for Vina Scoring
     pocket_coords = torch.tensor(pocket_mol.GetConformer().GetPositions(), dtype=torch.float32, device=aligner.device)
