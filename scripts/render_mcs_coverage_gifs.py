@@ -8,9 +8,36 @@ from lig_align.io import process_query_ligand
 
 
 EXAMPLES = [
-    ("broader_acemetacin", "Acemetacin", "COc1ccc2c(c1)c(C(=O)NCc1ccccc1)c(CC(=O)O)n2C"),
-    ("mid_diclofenac", "Diclofenac", "O=C(O)Cc1ccccc1Nc1c(Cl)cccc1Cl"),
-    ("high_flurbiprofen", "Flurbiprofen", "CC(C)c1ccc(cc1)[C@@H](C)C(=O)O"),
+    (
+        "query_low_acemetacin",
+        "Acemetacin",
+        "COc1ccc2c(c1)c(C(=O)NCc1ccccc1)c(CC(=O)O)n2C",
+    ),
+    (
+        "query_mid_diclofenac",
+        "Diclofenac",
+        "O=C(O)Cc1ccccc1Nc1c(Cl)cccc1Cl",
+    ),
+    (
+        "query_high_flurbiprofen",
+        "Flurbiprofen",
+        "CC(C)c1ccc(cc1)[C@@H](C)C(=O)O",
+    ),
+    (
+        "ref_low_tolmetin",
+        "Tolmetin",
+        "Cc1ccc(cc1)C(=O)c1ccc(C)n1CC(=O)O",
+    ),
+    (
+        "ref_mid_fenbufen",
+        "Fenbufen",
+        "O=C(O)CCC(=O)c1ccc(c(c1)CC)c1ccccc1",
+    ),
+    (
+        "ref_high_acemetacin",
+        "Acemetacin",
+        "COc1ccc2c(c1)c(C(=O)NCc1ccccc1)c(CC(=O)O)n2C",
+    ),
 ]
 
 
