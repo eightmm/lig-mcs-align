@@ -128,7 +128,7 @@ Main takeaway:
 
 ### GPU Batch Probe
 
-The GPU probe below was run separately with `5` seeds, `100` optimization steps, and `batch_size` values of `1` and `8`.
+The first GPU probe below was run with `5` seeds, `100` optimization steps, and `batch_size` values of `1` and `8`.
 
 | Batch size | Early stopping | Total time mean | Total time std | Avg steps mean | Avg steps std | Representative poses mean | Time per pose | Peak alloc | Peak reserved |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -147,6 +147,47 @@ Interpretation:
 Main takeaway:
 
 - once multiple representative poses survive clustering, GPU batch optimization is clearly worthwhile
+
+### GPU Batch Scaling
+
+To characterize scaling more carefully, the follow-up GPU benchmark below used `3` seeds, `200` optimization steps, and batch sizes from `1` to `32`.
+
+Benchmark case:
+
+- device: `cuda`
+- query: `Acemetacin`
+- seeds: `0, 1, 2`
+- representative poses mean: `16.3`
+- torsions: `4`
+
+| Batch size | Early stopping | Total time mean | Total time std | Avg steps mean | Avg steps std | Representative poses mean | Time per pose | Peak alloc | Peak reserved |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | off | 14.442 s | 9.488 s | 200.0 | 0.0 | 16.3 | 884.22 ms | 19.5 MB | 24.0 MB |
+| 1 | on | 11.772 s | 8.102 s | 151.7 | 14.6 | 16.3 | 720.75 ms | 19.5 MB | 24.0 MB |
+| 2 | off | 7.772 s | 4.676 s | 200.0 | 0.0 | 16.3 | 475.86 ms | 21.3 MB | 26.7 MB |
+| 2 | on | 7.086 s | 4.657 s | 156.1 | 19.6 | 16.3 | 433.81 ms | 21.3 MB | 26.7 MB |
+| 4 | off | 4.262 s | 2.083 s | 200.0 | 0.0 | 16.3 | 260.91 ms | 24.9 MB | 30.7 MB |
+| 4 | on | 3.848 s | 2.332 s | 151.5 | 14.9 | 16.3 | 235.57 ms | 24.9 MB | 30.7 MB |
+| 8 | off | 2.494 s | 0.881 s | 200.0 | 0.0 | 16.3 | 152.70 ms | 32.4 MB | 48.0 MB |
+| 8 | on | 2.213 s | 1.193 s | 148.7 | 12.9 | 16.3 | 135.52 ms | 32.4 MB | 48.0 MB |
+| 16 | off | 1.652 s | 0.197 s | 200.0 | 0.0 | 16.3 | 101.16 ms | 46.7 MB | 61.3 MB |
+| 16 | on | 1.398 s | 0.568 s | 149.6 | 13.6 | 16.3 | 85.58 ms | 46.7 MB | 61.3 MB |
+| 32 | off | 1.066 s | 0.225 s | 200.0 | 0.0 | 16.3 | 65.26 ms | 61.3 MB | 70.7 MB |
+| 32 | on | 0.810 s | 0.149 s | 151.7 | 14.6 | 16.3 | 49.57 ms | 61.3 MB | 70.7 MB |
+
+Interpretation:
+
+- GPU batch scaling is now clear and monotonic for same-molecule multi-pose optimization
+- `batch_size=32` reduced runtime by about `13.6x` relative to `batch_size=1`
+- peak allocated VRAM rose from `19.5 MB` to `61.3 MB`, which is small relative to the observed speedup
+- early stopping remained useful across all batch sizes, typically reducing the mean step count from about `200` to about `150`
+- the current implementation is therefore compute-limited rather than VRAM-limited for this workload
+
+Operational decision:
+
+- the default `opt_batch_size` is now set to `128`
+- this is intended for the current same-molecule batched optimizer on GPU
+- users should reduce it manually when a query yields many representative poses or when working in tighter GPU-memory environments
 
 ### Representative Optimization Run
 

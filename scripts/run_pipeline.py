@@ -17,7 +17,7 @@ def run_prediction(protein_pdb: str, ref_sdf: str, query_arg: str, out_dir: str,
                    num_confs: int = 1000, rmsd_threshold: float = 1.0,
                    mmff_opt: bool = True, optimize: bool = False,
                    freeze_mcs: bool = True, torsion_penalty: bool = True,
-                   weight_preset: str = 'vina', opt_batch_size: int = 8,
+                   weight_preset: str = 'vina', opt_batch_size: int = 128,
                    optimizer: str = 'adam', mcs_mode: str = 'auto',
                    min_fragment_size: int = 5, max_fragments: int = 3):
     t0 = time.time()
@@ -230,7 +230,7 @@ if __name__ == "__main__":
     parser.add_argument("--rmsd_threshold", type=float, default=1.0, help="RMSD threshold (Å) for clustering (default: 1.0)")
     parser.add_argument("--no_mmff", action="store_true", help="Disable MMFF94 force field optimization for query appendages")
     parser.add_argument("--optimize", action="store_true", help="Enable Gradient-based Torsion Optimization on ALL cluster representatives")
-    parser.add_argument("--opt_batch_size", type=int, default=8, help="Batch size for optimization (default: 8)")
+    parser.add_argument("--opt_batch_size", type=int, default=128, help="Batch size for optimization (default: 128)")
     parser.add_argument("--optimizer", type=str, choices=["adam", "adamw", "lbfgs"], default="adam", help="Optimizer for torsion optimization: adam, adamw, or lbfgs (default: adam)")
     parser.add_argument("--free_mcs", action="store_true", help="During optimization, let the MCS also optimize instead of acting as a rigid anchor")
     parser.set_defaults(torsion_penalty=True)

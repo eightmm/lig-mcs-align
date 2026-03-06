@@ -239,7 +239,7 @@ Main options:
 - `optimizer`: `adam` | `adamw` | `lbfgs`
 - `opt_steps`: optimization steps, default `100`
 - `opt_lr`: learning rate, default `0.05`
-- `opt_batch_size`: poses optimized together, default `8`
+- `opt_batch_size`: poses optimized together, default `128`
 - `freeze_mcs`: boolean, default `True`
 - CLI inverse flag: `--free_mcs`
 
@@ -266,7 +266,7 @@ Behavior by option:
 Batching behavior:
 
 - optimization is performed across representative poses in batches
-- `opt_batch_size` should be reduced if GPU memory becomes limiting
+- `opt_batch_size` should be reduced if GPU memory becomes limiting or if a query leaves unusually many representative poses
 - larger batches improve throughput when memory permits
 
 Practical guidance:

@@ -51,7 +51,7 @@ optimize           Enable torsion optimization
 optimizer          adam | adamw | lbfgs
 opt_steps          Number of optimization steps
 opt_lr             Optimization learning rate
-opt_batch_size     Number of poses processed per optimization batch
+opt_batch_size     Number of poses processed per optimization batch (default: 128)
 freeze_mcs         Keep MCS atoms fixed during optimization
 weight_preset      vina | vina_lp | vinardo
 torsion_penalty    Apply torsional entropy penalty (default: True)

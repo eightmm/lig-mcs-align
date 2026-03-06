@@ -39,7 +39,7 @@ def run_pipeline(
     optimizer: Literal["adam", "adamw", "lbfgs"] = "adam",
     opt_steps: int = 100,
     opt_lr: float = 0.05,
-    opt_batch_size: int = 8,
+    opt_batch_size: int = 128,
     freeze_mcs: bool = True,
     # Scoring
     weight_preset: Literal["vina", "vina_lp", "vinardo"] = "vina",
@@ -84,7 +84,7 @@ def run_pipeline(
         optimizer: Optimizer type: "adam", "adamw", "lbfgs" (default: "adam")
         opt_steps: Optimization steps (default: 100)
         opt_lr: Learning rate (default: 0.05)
-        opt_batch_size: Batch size for optimization (default: 8)
+        opt_batch_size: Batch size for optimization (default: 128)
         freeze_mcs: Keep MCS atoms fixed during optimization (default: True)
 
         # Scoring

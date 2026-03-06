@@ -40,7 +40,7 @@ Common optional arguments:
 --rmsd_threshold          RMSD threshold for clustering
 --mcs_mode                auto | single | multi | cross
 --optimize                Enable gradient optimization
---opt_batch_size          Number of poses optimized together
+--opt_batch_size          Number of poses optimized together (default: 128)
 --optimizer               adam | adamw | lbfgs
 --weight_preset           vina | vina_lp | vinardo
 --free_mcs                Allow MCS atoms to move during optimization
@@ -69,14 +69,15 @@ uv run python scripts/run_pipeline.py \
   -n 1000 \
   --rmsd_threshold 1.0 \
   --optimize \
-  --optimizer lbfgs \
-  --opt_batch_size 8
+  --optimizer lbfgs
 ```
 
 Scoring note:
 
 - `Vina` scores include the standard torsional entropy penalty by default
 - use `--no_torsion_penalty` only when you explicitly want interaction-only scores
+- `opt_batch_size=128` is now the default for same-molecule multi-pose optimization on GPU
+- reduce it if your ligand leaves many representative poses or if GPU memory becomes limiting
 
 ### MCS Mode Guidance
 
