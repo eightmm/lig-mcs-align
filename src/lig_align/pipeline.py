@@ -15,7 +15,7 @@ from rdkit.Geometry import Point3D
 
 from .aligner import LigandAligner
 from .scoring import compute_intramolecular_mask
-from .io import process_query_ligand
+from .io import load_pocket_bundle, process_query_ligand
 from .molecular.mcs import find_mcs_with_positions, auto_select_mcs_mapping
 from .molecular.relax import relax_pose_with_fixed_core
 
@@ -165,9 +165,8 @@ def run_pipeline(
 
     if verbose:
         print(f"Loading protein pocket from {protein_pdb}...")
-    pocket_mol = Chem.MolFromPDBFile(protein_pdb, sanitize=False, removeHs=True)
-    if pocket_mol is None:
-        raise ValueError(f"Failed to load protein pocket from {protein_pdb}")
+    pocket_bundle = load_pocket_bundle(protein_pdb, device, aligner.compute_vina_features)
+    pocket_mol = pocket_bundle.mol
 
     query_mol, canonical_smiles = process_query_ligand(query_ligand)
     if verbose:
@@ -288,8 +287,8 @@ def run_pipeline(
         query_mol.SetProp("LigAlign_Relaxation_Summary", relaxation_messages[0] if relaxation_messages else "not attempted")
 
     # 5. Extract features for Vina Scoring
-    pocket_coords = torch.tensor(pocket_mol.GetConformer().GetPositions(), dtype=torch.float32, device=aligner.device)
-    pocket_features = aligner.compute_vina_features(pocket_mol)
+    pocket_coords = pocket_bundle.coords
+    pocket_features = pocket_bundle.features
     query_features = aligner.compute_vina_features(query_mol)
 
     num_rotatable_bonds = None

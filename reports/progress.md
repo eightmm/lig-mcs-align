@@ -1,4 +1,4 @@
-# Weekly Report: 2026-03-06
+# Progress
 
 ## Summary
 
@@ -67,6 +67,7 @@ Interpretation:
 - conformer generation and clustering grows the most with molecule size and flexibility
 - optimization cost scales with `step` count, but not monotonically with heavy-atom count alone
 - this makes pocket feature caching the most obvious first optimization for repeated runs on the same receptor
+- a same-process smoke test showed `10gs` pocket loading dropping from about `2.01 s` on first load to effectively `0 s` on cache hit
 
 Optimization cost per step:
 

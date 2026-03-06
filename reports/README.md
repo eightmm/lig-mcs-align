@@ -1,11 +1,10 @@
 # Reports
 
-This directory collects weekly meeting material, including short written updates, links to GIF assets, and concept diagrams that can be reused in slides or notes.
+This directory collects the current progress summary and reusable visual assets for the 10gs example set.
 
-## Weekly Reports
+## Current Summary
 
-- [2026-03-06-weekly.md](2026-03-06-weekly.md): initial weekly summary for the 10gs example set
-- [weekly-template.md](weekly-template.md): reusable template for future updates
+- [progress.md](progress.md): current progress, capabilities, results, and runtime notes
 
 ## Useful Cross-Links
 
@@ -23,12 +22,6 @@ Primary GIFs already in the repository:
 - `examples/10gs/visualizations/coverage/`
 - `examples/10gs/visualizations/combinatorial/`
 
-## Suggested Reporting Pattern
+## Benchmark Utilities
 
-Each weekly report should contain:
-
-- objective and scope
-- what changed during the week
-- representative visual evidence
-- open risks or blockers
-- next actions for the following week
+- `scripts/benchmark_runtime.py`: reproducible runtime and batch-behavior benchmark
