@@ -12,6 +12,10 @@ def generate_conformers_and_cluster(mol: Chem.Mol,
     """
     Generate multiple conformers and cluster them to get a diverse representative set.
 
+    When coordMap is provided, MMFF optimization is deferred until after clustering
+    and only applied to cluster representatives, avoiding redundant work on conformers
+    that will be discarded.
+
     Args:
         mol: RDKit molecule
         device: torch device (cuda/cpu)
@@ -23,14 +27,14 @@ def generate_conformers_and_cluster(mol: Chem.Mol,
         mol: Molecule with conformers (H atoms removed)
         representative_cids: List of conformer IDs (cluster centroids)
     """
-    
+
     # 1. Generate Conformers
     print(f"Generating {num_confs} conformers...")
     params = AllChem.ETKDGv3()
     params.pruneRmsThresh = -1.0 # Disable pruning during generation to ensure requested number
     params.randomSeed = 42
     params.numThreads = 0 # Use all available cores
-    
+
     if coordMap is not None:
         print(f"Applying rigid constraints for {len(coordMap)} atoms during generation...")
         cids = AllChem.EmbedMultipleConfs(mol, numConfs=num_confs,
@@ -44,61 +48,66 @@ def generate_conformers_and_cluster(mol: Chem.Mol,
             cids = AllChem.EmbedMultipleConfs(mol, numConfs=num_confs, params=params)
     else:
         cids = AllChem.EmbedMultipleConfs(mol, numConfs=num_confs, params=params)
-    
-    if coordMap is not None and len(cids) > 0:
-        for cid in cids:
-            AllChem.MMFFOptimizeMolecule(mol, confId=cid, maxIters=200, 
-                                         nonBondedThresh=100.0, ignoreInterfragInteractions=False)
-    
+
     if len(cids) == 0:
         raise RuntimeError("Conformer generation failed completely.")
-        
-    # 1.5 Canonicalization & Hydrogen Removal
-    mol = Chem.RemoveHs(mol)
-    
-    # 2. RMSD calculation for clustering (PyTorch Batched Kabsch)
+
+    # 2. RMSD calculation for clustering on heavy atoms only (PyTorch Batched Kabsch)
+    # Remove Hs first for RMSD calculation (heavy-atom RMSD is more meaningful)
+    mol_heavy = Chem.RemoveHs(mol)
     print(f"Calculating PyTorch batched RMSD matrix for {len(cids)} conformers...")
     n_confs = len(cids)
-    n_atoms = mol.GetNumAtoms()
-    
+    n_atoms_heavy = mol_heavy.GetNumAtoms()
+
     dists = []
     if n_confs > 1:
-        coords = torch.zeros((n_confs, n_atoms, 3), device=device)
+        coords = torch.zeros((n_confs, n_atoms_heavy, 3), device=device)
         for i, cid in enumerate(cids):
-            coords[i] = torch.tensor(mol.GetConformer(cid).GetPositions(), dtype=torch.float32, device=device)
-            
+            coords[i] = torch.tensor(mol_heavy.GetConformer(cid).GetPositions(), dtype=torch.float32, device=device)
+
         coords_centered = coords - coords.mean(dim=1, keepdim=True)
-        H = torch.einsum('iac,jad->ijcd', coords_centered, coords_centered) 
+        H = torch.einsum('iac,jad->ijcd', coords_centered, coords_centered)
         H_flat = H.reshape(n_confs * n_confs, 3, 3)
-        
+
         U, S, Vh = torch.linalg.svd(H_flat)
         V = Vh.transpose(1, 2)
         Ut = U.transpose(1, 2)
         R = torch.bmm(V, Ut)
         det = torch.linalg.det(R)
-        
+
         S_sum = S.sum(dim=1)
         reflection_mask = det < 0
         S_sum[reflection_mask] -= 2 * S[reflection_mask, 2]
-        
-        norms = (coords_centered ** 2).sum(dim=(1, 2)) 
+
+        norms = (coords_centered ** 2).sum(dim=(1, 2))
         norms_i = norms.unsqueeze(1).expand(n_confs, n_confs).flatten()
         norms_j = norms.unsqueeze(0).expand(n_confs, n_confs).flatten()
-        
+
         dist_sq = norms_i + norms_j - 2 * S_sum
         dist_sq = torch.clamp(dist_sq, min=0.0)
-        rmsd_matrix = torch.sqrt(dist_sq / n_atoms).view(n_confs, n_confs)
+        rmsd_matrix = torch.sqrt(dist_sq / n_atoms_heavy).view(n_confs, n_confs)
 
         # OPTIMIZED: Vectorized extraction of lower triangle
         triu_indices = torch.triu_indices(n_confs, n_confs, offset=1, device=device)
         dists = rmsd_matrix[triu_indices[1], triu_indices[0]].cpu().tolist()
-    
+
     # 3. Butina Clustering
     print(f"Clustering conformers with RMSD threshold {rmsd_threshold}Å...")
     clusters = Butina.ClusterData(dists, n_confs, rmsd_threshold, isDistData=True)
 
     # Select centroid from each cluster (no max limit - use all clusters)
     representative_cids = [cluster[0] for cluster in clusters]
+
+    # 4. MMFF optimize only representatives on full mol (with Hs) before H removal
+    if coordMap is not None and len(representative_cids) > 0:
+        print(f"MMFF optimizing {len(representative_cids)} representatives (skipping {n_confs - len(representative_cids)} non-representative conformers)...")
+        for cid in representative_cids:
+            AllChem.MMFFOptimizeMolecule(mol, confId=cid, maxIters=200,
+                                         nonBondedThresh=100.0, ignoreInterfragInteractions=False)
+
+    # 5. Now remove Hs for downstream (use mol, not mol_heavy, to preserve MMFF-optimized coords)
+    mol = Chem.RemoveHs(mol)
+
     print(f"Selected {len(representative_cids)} representative conformers from {len(clusters)} clusters.")
 
     return mol, representative_cids

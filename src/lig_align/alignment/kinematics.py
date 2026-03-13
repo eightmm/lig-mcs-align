@@ -14,7 +14,7 @@ def get_rotation_matrix(axis: torch.Tensor, theta: torch.Tensor) -> torch.Tensor
     theta: scalar tensor (angle in radians)
     Returns: [3, 3] rotation matrix
     """
-    axis = axis / torch.norm(axis)
+    axis = axis / torch.norm(axis).clamp_min(1e-12)
     a, b, c = axis[0], axis[1], axis[2]
 
     sin_t = sin(theta)

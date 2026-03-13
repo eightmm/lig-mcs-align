@@ -94,15 +94,16 @@ class LigandAligner:
     def compute_vina_features(self, mol: Chem.Mol) -> dict:
         return compute_vina_features(mol, self.device)
 
-    def step4_vina_scoring(self, 
-                           aligned_query_coords: torch.Tensor, 
+    def step4_vina_scoring(self,
+                           aligned_query_coords: torch.Tensor,
                            pocket_coords: torch.Tensor,
                            query_features: dict,
                            pocket_features: dict,
                            num_rotatable_bonds: int = None,
                            weight_preset: str = 'vina',
-                           intramolecular_mask: torch.Tensor = None) -> torch.Tensor:
-        return vina_scoring(aligned_query_coords, pocket_coords, query_features, pocket_features, num_rotatable_bonds, weight_preset, intramolecular_mask=intramolecular_mask)
+                           intramolecular_mask: torch.Tensor = None,
+                           precomputed_matrices: dict = None) -> torch.Tensor:
+        return vina_scoring(aligned_query_coords, pocket_coords, query_features, pocket_features, num_rotatable_bonds, weight_preset, intramolecular_mask=intramolecular_mask, precomputed_matrices=precomputed_matrices)
 
     def step5_final_selection(self,
                               mol: Chem.Mol,

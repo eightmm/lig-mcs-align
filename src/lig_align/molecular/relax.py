@@ -7,9 +7,13 @@ from rdkit.Chem import AllChem
 def relax_pose_with_fixed_core(mol: Chem.Mol,
                                conf_id: int,
                                fixed_indices: set[int],
-                               max_iters: int = 500) -> tuple[bool, str]:
+                               max_iters: int = 500,
+                               mmff_props=None) -> tuple[bool, str]:
     """
     Relax non-core atoms with MMFF, falling back to UFF when needed.
+
+    Args:
+        mmff_props: Precomputed MMFF properties (avoids recomputation per conformer).
 
     Returns:
         (applied, message)
@@ -28,7 +32,8 @@ def relax_pose_with_fixed_core(mol: Chem.Mol,
     except Exception:
         pass
 
-    mmff_props = AllChem.MMFFGetMoleculeProperties(mol)
+    if mmff_props is None:
+        mmff_props = AllChem.MMFFGetMoleculeProperties(mol)
     if mmff_props is not None:
         ff = AllChem.MMFFGetMoleculeForceField(mol, mmff_props, confId=conf_id)
         if ff is not None:

@@ -54,6 +54,7 @@ def optimize_torsions_vina(mol: Chem.Mol,
         stats (optional): runtime/step metadata when return_stats=True
     """
     from ..scoring import vina_scoring
+    from ..scoring.vina_scoring import precompute_interaction_matrices
     from ..scoring.masks import compute_intramolecular_mask
 
     # Auto-detect single vs batched input
@@ -67,8 +68,9 @@ def optimize_torsions_vina(mol: Chem.Mol,
     n_poses = init_coords.shape[0]
     n_atoms = init_coords.shape[1]
 
-    # Precompute intramolecular mask once
+    # Precompute intramolecular mask and interaction matrices once
     intra_mask = compute_intramolecular_mask(mol, device)
+    precomputed = precompute_interaction_matrices(query_features, pocket_features, device)
 
     # Check if molecule has rotatable bonds
     test_model = LigandKinematics(mol, ref_indices, init_coords[0], device, freeze_mcs=freeze_mcs)
@@ -127,7 +129,8 @@ def optimize_torsions_vina(mol: Chem.Mol,
                         coords = model()
                         loss = vina_scoring(coords.unsqueeze(0), pocket_coords, query_features,
                                           pocket_features, num_rotatable_bonds, weight_preset,
-                                          intramolecular_mask=intra_mask)
+                                          intramolecular_mask=intra_mask,
+                                          precomputed_matrices=precomputed)
                         loss = loss.sum()
                         loss.backward()
                         return loss
@@ -175,7 +178,8 @@ def optimize_torsions_vina(mol: Chem.Mol,
                 opt.zero_grad()
                 coords = model()
                 losses = vina_scoring(coords, pocket_coords, query_features, pocket_features,
-                                      num_rotatable_bonds, weight_preset, intramolecular_mask=intra_mask)
+                                      num_rotatable_bonds, weight_preset, intramolecular_mask=intra_mask,
+                                      precomputed_matrices=precomputed)
                 active_indices = torch.nonzero(active_mask, as_tuple=False).squeeze(1)
                 per_pose_steps[start_idx + active_indices] += 1
                 loss = losses[active_mask].sum()
