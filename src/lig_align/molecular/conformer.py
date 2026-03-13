@@ -3,6 +3,8 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.ML.Cluster import Butina
 from typing import List, Tuple, Optional, Dict
+from rdkit.Geometry import Point3D
+
 
 def generate_conformers_and_cluster(mol: Chem.Mol,
                                     device: torch.device,
@@ -12,9 +14,11 @@ def generate_conformers_and_cluster(mol: Chem.Mol,
     """
     Generate multiple conformers and cluster them to get a diverse representative set.
 
-    When coordMap is provided, MMFF optimization is deferred until after clustering
-    and only applied to cluster representatives, avoiding redundant work on conformers
-    that will be discarded.
+    When coordMap is provided:
+    1. Embed conformers with approximate constraints
+    2. Teleport MCS atoms to exact positions on ALL conformers (cheap)
+    3. Cluster on post-teleport coords (reflects true pose diversity)
+    4. MMFF optimize only cluster representatives
 
     Args:
         mol: RDKit molecule
@@ -52,8 +56,15 @@ def generate_conformers_and_cluster(mol: Chem.Mol,
     if len(cids) == 0:
         raise RuntimeError("Conformer generation failed completely.")
 
-    # 2. RMSD calculation for clustering on heavy atoms only (PyTorch Batched Kabsch)
-    # Remove Hs first for RMSD calculation (heavy-atom RMSD is more meaningful)
+    # 2. Teleport MCS atoms to exact positions BEFORE clustering
+    #    This ensures clustering reflects true post-surgery diversity
+    if coordMap is not None:
+        for cid in cids:
+            conf = mol.GetConformer(cid)
+            for atom_idx, pos in coordMap.items():
+                conf.SetAtomPosition(atom_idx, Point3D(pos.x, pos.y, pos.z))
+
+    # 3. RMSD calculation for clustering on heavy atoms (PyTorch Batched Kabsch)
     mol_heavy = Chem.RemoveHs(mol)
     print(f"Calculating PyTorch batched RMSD matrix for {len(cids)} conformers...")
     n_confs = len(cids)
@@ -91,21 +102,21 @@ def generate_conformers_and_cluster(mol: Chem.Mol,
         triu_indices = torch.triu_indices(n_confs, n_confs, offset=1, device=device)
         dists = rmsd_matrix[triu_indices[1], triu_indices[0]].cpu().tolist()
 
-    # 3. Butina Clustering
+    # 4. Butina Clustering
     print(f"Clustering conformers with RMSD threshold {rmsd_threshold}Å...")
     clusters = Butina.ClusterData(dists, n_confs, rmsd_threshold, isDistData=True)
 
-    # Select centroid from each cluster (no max limit - use all clusters)
+    # Select centroid from each cluster
     representative_cids = [cluster[0] for cluster in clusters]
 
-    # 4. MMFF optimize only representatives on full mol (with Hs) before H removal
+    # 5. MMFF optimize only representatives on full mol (with Hs) before H removal
     if coordMap is not None and len(representative_cids) > 0:
         print(f"MMFF optimizing {len(representative_cids)} representatives (skipping {n_confs - len(representative_cids)} non-representative conformers)...")
         for cid in representative_cids:
             AllChem.MMFFOptimizeMolecule(mol, confId=cid, maxIters=200,
                                          nonBondedThresh=100.0, ignoreInterfragInteractions=False)
 
-    # 5. Now remove Hs for downstream (use mol, not mol_heavy, to preserve MMFF-optimized coords)
+    # 6. Remove Hs for downstream
     mol = Chem.RemoveHs(mol)
 
     print(f"Selected {len(representative_cids)} representative conformers from {len(clusters)} clusters.")
